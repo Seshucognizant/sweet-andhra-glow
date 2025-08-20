@@ -3,114 +3,47 @@ import { Heart, Star, Eye, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import ProductDetail from "@/components/ProductDetail";
-import andhraSweetsCollection from "@/assets/andhra-sweets-collection.jpg";
-import andhraSnacks from "@/assets/andhra-snacks.jpg";
-import pootharekulu from "@/assets/pootharekulu.jpg";
-import coconutBurfi from "@/assets/coconut-burfi.jpg";
-import mysorePak from "@/assets/mysore-pak.jpg";
-
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  rating: number;
-  reviews: number;
-  category: string;
-  isNew?: boolean;
-  isBestseller?: boolean;
-}
-
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Premium Gulab Jamun",
-    description: "Soft, spongy and syrupy traditional sweet",
-    price: 299,
-    originalPrice: 349,
-    image: andhraSweetsCollection,
-    rating: 4.8,
-    reviews: 124,
-    category: "Traditional Sweets",
-    isBestseller: true
-  },
-  {
-    id: 2,
-    name: "Andhra Murukku",
-    description: "Crispy spiral-shaped traditional snack",
-    price: 179,
-    image: andhraSnacks,
-    rating: 4.6,
-    reviews: 89,
-    category: "Snacks & Savories",
-    isNew: true
-  },
-  {
-    id: 3,
-    name: "Pootharekulu",
-    description: "Delicate silver leaf sweet specialty",
-    price: 449,
-    image: pootharekulu,
-    rating: 4.9,
-    reviews: 67,
-    category: "Andhra Specials",
-    isBestseller: true
-  },
-  {
-    id: 4,
-    name: "Coconut Burfi",
-    description: "Rich coconut squares with ghee",
-    price: 249,
-    image: coconutBurfi,
-    rating: 4.7,
-    reviews: 156,
-    category: "Traditional Sweets"
-  },
-  {
-    id: 5,
-    name: "Mysore Pak",
-    description: "Ghee-rich golden sweet cubes",
-    price: 329,
-    originalPrice: 379,
-    image: mysorePak,
-    rating: 4.8,
-    reviews: 201,
-    category: "Traditional Sweets",
-    isBestseller: true
-  },
-  {
-    id: 6,
-    name: "Festival Mix",
-    description: "Assorted sweets perfect for celebrations",
-    price: 599,
-    image: andhraSweetsCollection,
-    rating: 4.9,
-    reviews: 88,
-    category: "Gift Boxes",
-    isNew: true
-  }
-];
+import { useProducts, useCategories, Product as ProductType } from "@/hooks/useProducts";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 const ProductGrid = () => {
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const { user } = useAuth();
+  const { addToCart } = useCart();
+  const { data: products, isLoading: productsLoading } = useProducts(selectedCategory);
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
 
-  const categories = ["All", "Traditional Sweets", "Andhra Specials", "Snacks & Savories", "Gift Boxes"];
-
-  const filteredProducts = selectedCategory === "All" 
-    ? products 
-    : products.filter(product => product.category === selectedCategory);
-
-  const toggleFavorite = (productId: number) => {
+  const toggleFavorite = (productId: string) => {
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to add items to wishlist",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setFavorites(prev => 
       prev.includes(productId) 
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
   };
+
+  const handleAddToCart = async (product: ProductType) => {
+    await addToCart(product.id, 1);
+  };
+
+  const categoryOptions = [
+    { id: "all", name: "All Products", slug: "all" },
+    ...(categories || [])
+  ];
 
   return (
     <section className="py-20 px-4">
@@ -127,24 +60,47 @@ const ProductGrid = () => {
 
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
-              onClick={() => setSelectedCategory(category)}
-              className={selectedCategory === category 
-                ? "bg-gradient-primary hover-glow" 
-                : "glass-primary hover-lift"
-              }
-            >
-              {category}
-            </Button>
-          ))}
+          {categoriesLoading ? (
+            <div className="flex gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-10 w-24" />
+              ))}
+            </div>
+          ) : (
+            categoryOptions.map((category) => (
+              <Button
+                key={category.id}
+                variant={selectedCategory === category.slug ? "default" : "outline"}
+                onClick={() => setSelectedCategory(category.slug)}
+                className={selectedCategory === category.slug 
+                  ? "bg-gradient-primary hover-glow" 
+                  : "glass-primary hover-lift"
+                }
+              >
+                {category.name}
+              </Button>
+            ))
+          )}
         </div>
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProducts.map((product, index) => (
+          {productsLoading ? (
+            [...Array(6)].map((_, i) => (
+              <Card key={i} className="glass overflow-hidden animate-scale-in">
+                <Skeleton className="w-full h-64" />
+                <div className="p-6 space-y-4">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <div className="flex justify-between items-center">
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-10 w-24" />
+                  </div>
+                </div>
+              </Card>
+            ))
+          ) : products?.map((product, index) => (
             <Card 
               key={product.id} 
               className="group glass hover-lift cursor-pointer overflow-hidden animate-scale-in"
@@ -153,17 +109,17 @@ const ProductGrid = () => {
               {/* Image Container */}
               <div className="relative overflow-hidden">
                 <img 
-                  src={product.image} 
+                  src={product.image_url || "/placeholder.svg"} 
                   alt={product.name}
                   className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 
                 {/* Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
-                  {product.isNew && (
+                  {product.is_new && (
                     <Badge className="bg-gradient-tertiary text-white">New</Badge>
                   )}
-                  {product.isBestseller && (
+                  {product.is_bestseller && (
                     <Badge className="bg-gradient-secondary text-white">Bestseller</Badge>
                   )}
                 </div>
@@ -171,8 +127,21 @@ const ProductGrid = () => {
                 {/* Hover Actions */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                   <div className="flex space-x-3">
-                    <ProductDetail />
-                    <Button size="icon" variant="secondary" className="rounded-full glass-primary">
+                    <ProductDetail>
+                      <Button size="icon" variant="secondary" className="rounded-full glass-primary">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </ProductDetail>
+                    <Button 
+                      size="icon" 
+                      variant="secondary" 
+                      className="rounded-full glass-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(product);
+                      }}
+                      disabled={product.stock_quantity === 0}
+                    >
                       <ShoppingCart className="w-4 h-4" />
                     </Button>
                   </div>
@@ -222,7 +191,7 @@ const ProductGrid = () => {
                     ))}
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {product.rating} ({product.reviews} reviews)
+                    {product.rating} ({product.review_count} reviews)
                   </span>
                 </div>
 
@@ -232,14 +201,22 @@ const ProductGrid = () => {
                     <span className="font-display text-xl font-bold text-primary">
                       ₹{product.price}
                     </span>
-                    {product.originalPrice && (
+                    {product.original_price && (
                       <span className="text-sm text-muted-foreground line-through">
-                        ₹{product.originalPrice}
+                        ₹{product.original_price}
                       </span>
                     )}
                   </div>
-                  <Button size="sm" className="bg-gradient-primary hover-glow">
-                    Add to Cart
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-primary hover-glow"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product);
+                    }}
+                    disabled={product.stock_quantity === 0}
+                  >
+                    {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                   </Button>
                 </div>
               </div>
@@ -248,11 +225,20 @@ const ProductGrid = () => {
         </div>
 
         {/* Load More */}
-        <div className="text-center mt-12">
-          <Button variant="outline" size="lg" className="glass-primary hover-lift">
-            Load More Products
-          </Button>
-        </div>
+        {!productsLoading && products && products.length > 0 && (
+          <div className="text-center mt-12">
+            <Button variant="outline" size="lg" className="glass-primary hover-lift">
+              Load More Products
+            </Button>
+          </div>
+        )}
+
+        {/* No Products Message */}
+        {!productsLoading && (!products || products.length === 0) && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">No products found in this category.</p>
+          </div>
+        )}
       </div>
     </section>
   );

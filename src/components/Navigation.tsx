@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
-import { Search, ShoppingCart, Menu, X, Star } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, Star, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AuthDialog } from "@/components/AuthDialog";
+import { UserMenu } from "@/components/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
+import { useCategories } from "@/hooks/useProducts";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [cartCount] = useState(3);
+  const { user } = useAuth();
+  const { getTotalItems } = useCart();
+  const { data: categories } = useCategories();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,13 +25,7 @@ const Navigation = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const categories = [
-    "Traditional Sweets",
-    "Andhra Specials", 
-    "Snacks & Savories",
-    "Festival Treats",
-    "Gift Boxes"
-  ];
+  const categoryItems = categories || [];
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -44,12 +45,12 @@ const Navigation = () => {
 
           {/* Desktop Categories */}
           <div className="hidden lg:flex items-center space-x-8">
-            {categories.map((category) => (
+            {categoryItems.map((category) => (
               <button
-                key={category}
+                key={category.id}
                 className="text-foreground/80 hover:text-primary transition-colors duration-200 font-medium"
               >
-                {category}
+                {category.name}
               </button>
             ))}
           </div>
@@ -71,15 +72,26 @@ const Navigation = () => {
             {/* Theme Toggle */}
             <ThemeToggle />
 
+            {/* Auth / User Menu */}
+            {user ? (
+              <UserMenu />
+            ) : (
+              <AuthDialog>
+                <Button variant="outline" size="icon" className="glass-primary hover-glow">
+                  <User className="w-5 h-5" />
+                </Button>
+              </AuthDialog>
+            )}
+
             {/* Cart */}
             <Button variant="outline" size="icon" className="relative glass-primary hover-glow">
               <ShoppingCart className="w-5 h-5" />
-              {cartCount > 0 && (
+              {getTotalItems() > 0 && (
                 <Badge 
                   variant="destructive" 
                   className="absolute -top-2 -right-2 w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-secondary"
                 >
-                  {cartCount}
+                  {getTotalItems()}
                 </Badge>
               )}
             </Button>
@@ -113,13 +125,13 @@ const Navigation = () => {
 
             {/* Mobile Categories */}
             <div className="space-y-2">
-              {categories.map((category) => (
+              {categoryItems.map((category) => (
                 <button
-                  key={category}
+                  key={category.id}
                   className="block w-full text-left py-2 text-foreground/80 hover:text-primary transition-colors duration-200 font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  {category}
+                  {category.name}
                 </button>
               ))}
             </div>

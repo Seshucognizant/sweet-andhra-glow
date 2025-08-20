@@ -44,7 +44,7 @@ const reviews: Review[] = [
   }
 ];
 
-const ProductDetail = () => {
+const ProductDetail = ({ children }: { children?: React.ReactNode }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState("500g");
