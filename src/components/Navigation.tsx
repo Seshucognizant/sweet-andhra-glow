@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ShoppingCart, Menu, X, Star, User } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, Star, User, Heart, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,14 +8,18 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { useCategories } from "@/hooks/useProducts";
+import { Link, useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useAuth();
   const { getTotalItems } = useCart();
+  const { items: wishlistItems } = useWishlist();
   const { data: categories } = useCategories();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -74,7 +78,29 @@ const Navigation = () => {
 
             {/* Auth / User Menu */}
             {user ? (
-              <UserMenu />
+              <>
+                <Button variant="outline" size="icon" className="relative glass-primary hover-glow" asChild>
+                  <Link to="/wishlist">
+                    <Heart className="w-5 h-5" />
+                    {wishlistItems.length > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-secondary"
+                      >
+                        {wishlistItems.length}
+                      </Badge>
+                    )}
+                  </Link>
+                </Button>
+                
+                <Button variant="outline" size="icon" className="glass-primary hover-glow" asChild>
+                  <Link to="/orders">
+                    <Package className="w-5 h-5" />
+                  </Link>
+                </Button>
+                
+                <UserMenu />
+              </>
             ) : (
               <AuthDialog>
                 <Button variant="outline" size="icon" className="glass-primary hover-glow">
@@ -84,16 +110,23 @@ const Navigation = () => {
             )}
 
             {/* Cart */}
-            <Button variant="outline" size="icon" className="relative glass-primary hover-glow">
-              <ShoppingCart className="w-5 h-5" />
-              {getTotalItems() > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-secondary"
-                >
-                  {getTotalItems()}
-                </Badge>
-              )}
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="relative glass-primary hover-glow"
+              asChild
+            >
+              <Link to="/checkout">
+                <ShoppingCart className="w-5 h-5" />
+                {getTotalItems() > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-secondary"
+                  >
+                    {getTotalItems()}
+                  </Badge>
+                )}
+              </Link>
             </Button>
 
             {/* Mobile Menu Toggle */}

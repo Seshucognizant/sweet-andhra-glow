@@ -7,33 +7,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ProductDetail from "@/components/ProductDetail";
 import { useProducts, useCategories, Product as ProductType } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 const ProductGrid = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [favorites, setFavorites] = useState<string[]>([]);
   
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { data: products, isLoading: productsLoading } = useProducts(selectedCategory);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   const toggleFavorite = (productId: string) => {
-    if (!user) {
-      toast({
-        title: "Please log in",
-        description: "You need to be logged in to add items to wishlist",
-        variant: "destructive",
-      });
-      return;
+    if (isInWishlist(productId)) {
+      removeFromWishlist(productId);
+    } else {
+      addToWishlist(productId);
     }
-    
-    setFavorites(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
   };
 
   const handleAddToCart = async (product: ProductType) => {
@@ -159,7 +151,7 @@ const ProductGrid = () => {
                 >
                   <Heart 
                     className={`w-4 h-4 ${
-                      favorites.includes(product.id) 
+                      isInWishlist(product.id) 
                         ? 'text-accent fill-accent' 
                         : 'text-white'
                     }`} 
