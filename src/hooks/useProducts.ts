@@ -24,9 +24,9 @@ export interface Product {
   };
 }
 
-export const useProducts = (categorySlug?: string) => {
+export const useProducts = (categorySlug?: string, searchTerm?: string) => {
   return useQuery({
-    queryKey: ['products', categorySlug],
+    queryKey: ['products', categorySlug, searchTerm],
     queryFn: async () => {
       let query = supabase
         .from('products')
@@ -39,6 +39,10 @@ export const useProducts = (categorySlug?: string) => {
 
       if (categorySlug && categorySlug !== 'all') {
         query = query.eq('categories.slug', categorySlug);
+      }
+
+      if (searchTerm && searchTerm.trim()) {
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query;

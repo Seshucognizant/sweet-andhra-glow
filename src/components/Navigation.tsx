@@ -9,15 +9,18 @@ import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { useSearch } from "@/contexts/SearchContext";
 import { useCategories } from "@/hooks/useProducts";
 import { Link, useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
   const { user } = useAuth();
   const { getTotalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
+  const { searchTerm, selectedCategory, setSearchTerm, setSelectedCategory } = useSearch();
   const { data: categories } = useCategories();
   const navigate = useNavigate();
 
@@ -28,6 +31,30 @@ const Navigation = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearchTerm !== searchTerm) {
+        setSearchTerm(localSearchTerm);
+        if (localSearchTerm || searchTerm) {
+          navigate('/');
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [localSearchTerm, searchTerm, setSearchTerm, navigate]);
+
+  const handleCategoryClick = (categorySlug: string) => {
+    setSelectedCategory(categorySlug);
+    navigate('/');
+    setIsMenuOpen(false);
+  };
 
   const categoryItems = categories || [];
 
@@ -52,7 +79,12 @@ const Navigation = () => {
             {categoryItems.map((category) => (
               <button
                 key={category.id}
-                className="text-foreground/80 hover:text-primary transition-colors duration-200 font-medium"
+                onClick={() => handleCategoryClick(category.slug)}
+                className={`transition-colors duration-200 font-medium ${
+                  selectedCategory === category.slug 
+                    ? 'text-primary font-semibold' 
+                    : 'text-foreground/80 hover:text-primary'
+                }`}
               >
                 {category.name}
               </button>
@@ -68,6 +100,8 @@ const Navigation = () => {
                 <Input
                   type="text"
                   placeholder="Search for sweets..."
+                  value={localSearchTerm}
+                  onChange={(e) => setLocalSearchTerm(e.target.value)}
                   className="pl-10 w-64 glass border-0 focus:ring-2 focus:ring-primary/20"
                 />
               </div>
@@ -151,6 +185,8 @@ const Navigation = () => {
                 <Input
                   type="text"
                   placeholder="Search for sweets..."
+                  value={localSearchTerm}
+                  onChange={(e) => setLocalSearchTerm(e.target.value)}
                   className="pl-10 w-full glass border-0"
                 />
               </div>
@@ -161,8 +197,12 @@ const Navigation = () => {
               {categoryItems.map((category) => (
                 <button
                   key={category.id}
-                  className="block w-full text-left py-2 text-foreground/80 hover:text-primary transition-colors duration-200 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => handleCategoryClick(category.slug)}
+                  className={`block w-full text-left py-2 transition-colors duration-200 font-medium ${
+                    selectedCategory === category.slug 
+                      ? 'text-primary font-semibold' 
+                      : 'text-foreground/80 hover:text-primary'
+                  }`}
                 >
                   {category.name}
                 </button>

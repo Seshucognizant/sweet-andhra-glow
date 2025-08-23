@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Heart, Star, Eye, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,16 +7,16 @@ import ProductDetail from "@/components/ProductDetail";
 import { useProducts, useCategories, Product as ProductType } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { useSearch } from "@/contexts/SearchContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 const ProductGrid = () => {
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  
   const { user } = useAuth();
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
-  const { data: products, isLoading: productsLoading } = useProducts(selectedCategory);
+  const { searchTerm, selectedCategory, setSelectedCategory } = useSearch();
+  const { data: products, isLoading: productsLoading } = useProducts(selectedCategory, searchTerm);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   const toggleFavorite = (productId: string) => {
