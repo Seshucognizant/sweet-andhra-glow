@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 interface SearchContextType {
   searchTerm: string;
@@ -24,38 +24,21 @@ interface SearchProviderProps {
 }
 
 export const SearchProvider = ({ children }: SearchProviderProps) => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTermState] = useState('');
+  const [selectedCategory, setSelectedCategoryState] = useState('all');
   
-  const searchTerm = searchParams.get('search') || '';
-  const selectedCategory = searchParams.get('category') || 'all';
-
   const setSearchTerm = useCallback((term: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (term) {
-      newParams.set('search', term);
-    } else {
-      newParams.delete('search');
-    }
-    setSearchParams(newParams);
-  }, [searchParams, setSearchParams]);
+    setSearchTermState(term);
+  }, []);
 
   const setSelectedCategory = useCallback((category: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (category && category !== 'all') {
-      newParams.set('category', category);
-    } else {
-      newParams.delete('category');
-    }
-    setSearchParams(newParams);
-  }, [searchParams, setSearchParams]);
+    setSelectedCategoryState(category);
+  }, []);
 
   const clearSearch = useCallback(() => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete('search');
-    newParams.delete('category');
-    setSearchParams(newParams);
-  }, [searchParams, setSearchParams]);
+    setSearchTermState('');
+    setSelectedCategoryState('all');
+  }, []);
 
   return (
     <SearchContext.Provider 
