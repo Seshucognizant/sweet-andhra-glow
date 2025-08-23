@@ -9,15 +9,22 @@ import { useProducts, useCategories, Product as ProductType } from "@/hooks/useP
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useSearch } from "@/contexts/SearchContext";
+import { useFilters } from "@/contexts/FilterContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import ProductFilters from "@/components/ProductFilters";
 
 const ProductGrid = () => {
   const { user } = useAuth();
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { searchTerm, selectedCategory, setSelectedCategory } = useSearch();
-  const { data: products, isLoading: productsLoading } = useProducts(selectedCategory, searchTerm);
+  const { filters } = useFilters();
+  const { data: products, isLoading: productsLoading } = useProducts({
+    categorySlug: selectedCategory,
+    searchTerm,
+    ...filters
+  });
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   const toggleFavorite = (productId: string) => {
@@ -51,7 +58,7 @@ const ProductGrid = () => {
         </div>
 
         {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
           {categoriesLoading ? (
             <div className="flex gap-4">
               {[...Array(6)].map((_, i) => (
@@ -74,6 +81,9 @@ const ProductGrid = () => {
             ))
           )}
         </div>
+
+        {/* Advanced Filters */}
+        <ProductFilters />
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

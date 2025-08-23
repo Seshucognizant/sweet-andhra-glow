@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { SearchProvider } from "@/contexts/SearchContext";
+import { FilterProvider } from "@/contexts/FilterContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Checkout from "./pages/Checkout";
@@ -28,15 +29,17 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <SearchProvider>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/orders" element={<Orders />} />
-                    <Route path="/orders/:orderId" element={<OrderDetail />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                  <FilterProvider>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/orders" element={<Orders />} />
+                      <Route path="/orders/:orderId" element={<OrderDetail />} />
+                      <Route path="/wishlist" element={<Wishlist />} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </FilterProvider>
                 </SearchProvider>
               </BrowserRouter>
             </TooltipProvider>

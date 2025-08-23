@@ -24,9 +24,27 @@ export interface Product {
   };
 }
 
-export const useProducts = (categorySlug?: string, searchTerm?: string) => {
+interface ProductFilters {
+  categorySlug?: string;
+  searchTerm?: string;
+  priceRange?: [number, number];
+  minRating?: number;
+  availability?: 'all' | 'in-stock' | 'out-of-stock';
+  sortBy?: 'name' | 'price-low' | 'price-high' | 'rating' | 'newest' | 'popular';
+}
+
+export const useProducts = (filters: ProductFilters = {}) => {
+  const {
+    categorySlug,
+    searchTerm,
+    priceRange,
+    minRating,
+    availability,
+    sortBy = 'newest'
+  } = filters;
+
   return useQuery({
-    queryKey: ['products', categorySlug, searchTerm],
+    queryKey: ['products', categorySlug, searchTerm, priceRange, minRating, availability, sortBy],
     queryFn: async () => {
       let query = supabase
         .from('products')
@@ -34,15 +52,56 @@ export const useProducts = (categorySlug?: string, searchTerm?: string) => {
           *,
           category:categories(name, slug)
         `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .eq('is_active', true);
 
+      // Category filter
       if (categorySlug && categorySlug !== 'all') {
         query = query.eq('categories.slug', categorySlug);
       }
 
+      // Search filter
       if (searchTerm && searchTerm.trim()) {
         query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+
+      // Price range filter
+      if (priceRange && (priceRange[0] > 0 || priceRange[1] < 5000)) {
+        query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
+      }
+
+      // Minimum rating filter
+      if (minRating && minRating > 0) {
+        query = query.gte('rating', minRating);
+      }
+
+      // Availability filter
+      if (availability === 'in-stock') {
+        query = query.gt('stock_quantity', 0);
+      } else if (availability === 'out-of-stock') {
+        query = query.eq('stock_quantity', 0);
+      }
+
+      // Sorting
+      switch (sortBy) {
+        case 'name':
+          query = query.order('name', { ascending: true });
+          break;
+        case 'price-low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price-high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+        case 'popular':
+          query = query.order('review_count', { ascending: false });
+          break;
+        case 'newest':
+        default:
+          query = query.order('created_at', { ascending: false });
+          break;
       }
 
       const { data, error } = await query;
