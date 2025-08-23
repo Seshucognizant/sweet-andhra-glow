@@ -2,6 +2,7 @@ import { Filter, X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -132,9 +133,52 @@ const FilterContent = () => {
 
       {/* Price Range */}
       <div>
-        <label className="text-sm font-medium mb-3 block">
-          Price Range: ₹{filters.priceRange[0]} - ₹{filters.priceRange[1]}
-        </label>
+        <label className="text-sm font-medium mb-3 block">Price Range</label>
+        
+        {/* Price Input Fields */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Min Price</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₹</span>
+              <Input
+                type="number"
+                placeholder="0"
+                value={filters.priceRange[0] === 0 ? '' : filters.priceRange[0]}
+                onChange={(e) => {
+                  const minPrice = Math.max(0, parseInt(e.target.value) || 0);
+                  const maxPrice = Math.max(minPrice, filters.priceRange[1]);
+                  updateFilter('priceRange', [minPrice, maxPrice]);
+                }}
+                className="pl-7 glass-primary"
+                min="0"
+                max="10000"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Max Price</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₹</span>
+              <Input
+                type="number"
+                placeholder="5000"
+                value={filters.priceRange[1] === 5000 ? '' : filters.priceRange[1]}
+                onChange={(e) => {
+                  const maxPrice = Math.min(10000, parseInt(e.target.value) || 5000);
+                  const minPrice = Math.min(maxPrice, filters.priceRange[0]);
+                  updateFilter('priceRange', [minPrice, maxPrice]);
+                }}
+                className="pl-7 glass-primary"
+                min="0"
+                max="10000"
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Visual Slider */}
         <Slider
           value={filters.priceRange}
           onValueChange={(value) => updateFilter('priceRange', value as [number, number])}
@@ -146,6 +190,42 @@ const FilterContent = () => {
         <div className="flex justify-between text-xs text-muted-foreground mt-2">
           <span>₹0</span>
           <span>₹5000+</span>
+        </div>
+        
+        {/* Quick Price Buttons */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => updateFilter('priceRange', [0, 200])}
+            className="text-xs glass-primary hover-lift"
+          >
+            Under ₹200
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => updateFilter('priceRange', [200, 500])}
+            className="text-xs glass-primary hover-lift"
+          >
+            ₹200 - ₹500
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => updateFilter('priceRange', [500, 1000])}
+            className="text-xs glass-primary hover-lift"
+          >
+            ₹500 - ₹1000
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => updateFilter('priceRange', [1000, 5000])}
+            className="text-xs glass-primary hover-lift"
+          >
+            ₹1000+
+          </Button>
         </div>
       </div>
 
