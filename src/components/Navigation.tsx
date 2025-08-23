@@ -8,6 +8,7 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { AdvancedSearchModal } from "@/components/AdvancedSearchModal";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
+import { CartSidebar } from "@/components/CartSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
@@ -148,13 +149,12 @@ const Navigation = () => {
             )}
 
             {/* Cart */}
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="relative glass-primary hover-glow"
-              asChild
-            >
-              <Link to="/checkout">
+            <CartSidebar>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="relative glass-primary hover-glow"
+              >
                 <ShoppingCart className="w-5 h-5" />
                 {getTotalItems() > 0 && (
                   <Badge 
@@ -164,8 +164,8 @@ const Navigation = () => {
                     {getTotalItems()}
                   </Badge>
                 )}
-              </Link>
-            </Button>
+              </Button>
+            </CartSidebar>
 
             {/* Mobile Menu Toggle */}
             <Button

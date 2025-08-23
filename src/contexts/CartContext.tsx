@@ -92,25 +92,36 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
 
     try {
-      const { data, error } = await supabase
+      // First check if item already exists
+      const { data: existingItem } = await supabase
         .from('cart_items')
-        .upsert(
-          {
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('product_id', productId)
+        .eq('weight_option', weightOption || null)
+        .single();
+
+      if (existingItem) {
+        // Update existing item quantity
+        const { error } = await supabase
+          .from('cart_items')
+          .update({ quantity: existingItem.quantity + quantity })
+          .eq('id', existingItem.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new item
+        const { error } = await supabase
+          .from('cart_items')
+          .insert({
             user_id: user.id,
             product_id: productId,
             quantity,
-            weight_option: weightOption,
-          },
-          {
-            onConflict: 'user_id,product_id,weight_option',
-          }
-        )
-        .select(`
-          *,
-          product:products(name, price, image_url)
-        `);
+            weight_option: weightOption || null,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      }
       
       await loadCartItems();
       toast({
