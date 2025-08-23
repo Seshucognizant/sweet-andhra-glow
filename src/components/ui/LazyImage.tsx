@@ -2,6 +2,7 @@ import React from 'react';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import { useImageLoader } from '@/hooks/useImageLoader';
 import { useImageRetry } from '@/hooks/useImageRetry';
+import { useImageOptimization } from '@/hooks/useImageOptimization';
 import { cn } from '@/lib/utils';
 import { Loader2, ImageOff, RotateCcw } from 'lucide-react';
 
@@ -29,14 +30,22 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   alt = '',
   ...props
 }) => {
+  const { optimizeImageUrl, generateSrcSet } = useImageOptimization();
   const { isVisible, elementRef } = useIntersectionObserver({
     threshold,
     rootMargin,
     triggerOnce: true,
   });
 
+  // Optimize the image URL when visible
+  const optimizedSrc = isVisible ? optimizeImageUrl(src, { 
+    quality: 85,
+    width: props.width ? Number(props.width) : undefined,
+    height: props.height ? Number(props.height) : undefined
+  }) : '';
+
   const { loading, error, imageSrc } = useImageLoader({
-    src: isVisible ? src : '',
+    src: optimizedSrc,
     fallbackSrc,
   });
 
@@ -109,6 +118,8 @@ export const LazyImage: React.FC<LazyImageProps> = ({
             'w-full h-full object-cover transition-opacity duration-300',
             imageSrc ? 'opacity-100' : 'opacity-0'
           )}
+          srcSet={imageSrc ? generateSrcSet(src) : undefined}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           loading="lazy"
         />
       )}
