@@ -68,7 +68,52 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      setItems(data || []);
+
+      // Cleanup any duplicate rows for same product/weight to ensure single line per item
+      const normalize = (w?: string | null) => {
+        if (w === undefined || w === null) return null;
+        const t = String(w).trim().toLowerCase();
+        if (t === '' || t === 'null' || t === 'undefined') return null;
+        return t;
+      };
+
+      const rows = data || [];
+      const groups = new Map<string, { total: number; ids: string[] }>();
+      for (const r of rows as any[]) {
+        const key = `${r.product_id}:${normalize(r.weight_option) ?? 'null'}`;
+        const g = groups.get(key);
+        if (g) {
+          g.total += r.quantity || 0;
+          g.ids.push(r.id);
+        } else {
+          groups.set(key, { total: r.quantity || 0, ids: [r.id] });
+        }
+      }
+
+      let changed = false;
+      for (const [, g] of groups) {
+        if (g.ids.length > 1) {
+          changed = true;
+          const [keepId, ...dupes] = g.ids;
+          const { error: upErr } = await supabase.from('cart_items').update({ quantity: g.total }).eq('id', keepId);
+          if (upErr) throw upErr;
+          if (dupes.length) {
+            const { error: delErr } = await supabase.from('cart_items').delete().in('id', dupes);
+            if (delErr) throw delErr;
+          }
+        }
+      }
+
+      if (changed) {
+        const { data: fresh, error: refetchErr } = await supabase
+          .from('cart_items')
+          .select(`*, product:products(name, price, image_url)`) 
+          .eq('user_id', user.id);
+        if (refetchErr) throw refetchErr;
+        setItems(fresh || []);
+      } else {
+        setItems(rows);
+      }
     } catch (error) {
       console.error('Error loading cart:', error);
       toast({
@@ -92,51 +137,57 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
 
     try {
-      // Normalize weight option handling and merge duplicates if any
-      const baseQuery = supabase
+      // Merge duplicates by normalizing weight options and collapsing rows
+      const { data: allRows, error: selectError } = await supabase
         .from('cart_items')
         .select('*')
         .eq('user_id', user.id)
         .eq('product_id', productId);
 
-      const { data: matches, error: selectError } = weightOption
-        ? await baseQuery.eq('weight_option', weightOption)
-        : await baseQuery.is('weight_option', null);
-
       if (selectError) throw selectError;
 
-      if (matches && matches.length > 0) {
-        const totalExisting = matches.reduce((sum, row) => sum + (row.quantity || 0), 0);
+      const normalize = (w?: string | null) => {
+        if (w === undefined || w === null) return null;
+        const t = String(w).trim();
+        const lower = t.toLowerCase();
+        if (t.length === 0 || lower === 'null' || lower === 'undefined') return null;
+        return t;
+      };
+
+      const desired = normalize(weightOption);
+      const rows = allRows || [];
+      const matches = rows.filter((r: any) => normalize(r.weight_option) === desired);
+
+      if (matches.length > 0) {
+        const totalExisting = matches.reduce((sum: number, r: any) => sum + (r.quantity || 0), 0);
         const target = matches[0];
 
-        // Update target with summed quantity + new quantity
+        // Update target row with summed quantity + new quantity and normalized weight_option
         const { error: updateError } = await supabase
           .from('cart_items')
-          .update({ quantity: totalExisting + quantity })
+          .update({ quantity: totalExisting + quantity, weight_option: desired })
           .eq('id', target.id);
-
         if (updateError) throw updateError;
 
-        // Delete duplicates if any beyond the first
+        // Delete duplicate rows beyond the target
         if (matches.length > 1) {
-          const duplicates = matches.slice(1).map((r: any) => r.id);
+          const duplicateIds = matches.slice(1).map((r: any) => r.id);
           const { error: deleteError } = await supabase
             .from('cart_items')
             .delete()
-            .in('id', duplicates);
+            .in('id', duplicateIds);
           if (deleteError) throw deleteError;
         }
       } else {
-        // Insert new item
+        // No match: insert new row with normalized weight_option
         const { error: insertError } = await supabase
           .from('cart_items')
           .insert({
             user_id: user.id,
             product_id: productId,
             quantity,
-            weight_option: weightOption || null,
+            weight_option: desired,
           });
-
         if (insertError) throw insertError;
       }
       
