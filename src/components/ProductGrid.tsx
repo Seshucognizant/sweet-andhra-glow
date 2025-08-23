@@ -16,7 +16,7 @@ import ProductFilters from "@/components/ProductFilters";
 
 const ProductGrid = () => {
   const { user } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, items: cartItems } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { searchTerm, selectedCategory, setSelectedCategory } = useSearch();
   const { filters } = useFilters();
@@ -37,6 +37,11 @@ const ProductGrid = () => {
 
   const handleAddToCart = async (product: ProductType) => {
     await addToCart(product.id, 1);
+  };
+
+  const getCartQuantity = (productId: string) => {
+    return cartItems.filter(item => item.product_id === productId)
+      .reduce((total, item) => total + item.quantity, 0);
   };
 
   const categoryOptions = [
@@ -212,17 +217,27 @@ const ProductGrid = () => {
                       </span>
                     )}
                   </div>
-                  <Button 
-                    size="sm" 
-                    className="bg-gradient-primary hover-glow"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(product);
-                    }}
-                    disabled={product.stock_quantity === 0}
-                  >
-                    {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
-                  </Button>
+                  <div className="relative">
+                    <Button 
+                      size="sm" 
+                      className="bg-gradient-primary hover-glow"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(product);
+                      }}
+                      disabled={product.stock_quantity === 0}
+                    >
+                      {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </Button>
+                    {getCartQuantity(product.id) > 0 && (
+                      <Badge 
+                        variant="secondary" 
+                        className="absolute -top-2 -right-2 bg-gradient-secondary text-white text-xs px-2 py-1 rounded-full min-w-6 h-6 flex items-center justify-center"
+                      >
+                        +{getCartQuantity(product.id)}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>
