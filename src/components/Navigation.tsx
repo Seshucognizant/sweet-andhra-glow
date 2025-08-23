@@ -65,14 +65,18 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
+          <Link 
+            to="/" 
+            className="flex items-center space-x-2 transition-all duration-200 hover:opacity-80 cursor-pointer"
+            title="Go to Homepage"
+          >
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-primary rounded-full flex items-center justify-center">
               <Star className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
             </div>
             <span className="font-display text-xl lg:text-2xl font-bold">
               Andhra Sweets
             </span>
-          </div>
+          </Link>
 
           {/* Desktop Categories */}
           <div className="hidden lg:flex items-center space-x-8">
