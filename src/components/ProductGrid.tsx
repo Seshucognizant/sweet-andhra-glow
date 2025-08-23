@@ -142,18 +142,28 @@ const ProductGrid = () => {
                         <Eye className="w-4 h-4" />
                       </Button>
                     </ProductDetail>
-                    <Button 
-                      size="icon" 
-                      variant="secondary" 
-                      className="rounded-full glass-primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(product);
-                      }}
-                      disabled={product.stock_quantity === 0}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                    </Button>
+                    <div className="relative">
+                      <Button 
+                        size="icon" 
+                        variant="secondary" 
+                        className="rounded-full glass-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                        disabled={product.stock_quantity === 0}
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                      </Button>
+                      {getCartQuantity(product.id) > 0 && (
+                        <Badge 
+                          variant="secondary" 
+                          className="absolute -top-2 -right-2 bg-gradient-secondary text-white text-xs px-1 py-0.5 rounded-full min-w-5 h-5 flex items-center justify-center"
+                        >
+                          {getCartQuantity(product.id)}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
 
