@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthDialog } from "@/components/AuthDialog";
 import { UserMenu } from "@/components/UserMenu";
+import { AdvancedSearchModal } from "@/components/AdvancedSearchModal";
+import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
@@ -99,16 +101,14 @@ const Navigation = () => {
           <div className="flex items-center space-x-4">
             {/* Desktop Search */}
             <div className="hidden md:flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search for sweets..."
-                  value={localSearchTerm}
-                  onChange={(e) => setLocalSearchTerm(e.target.value)}
-                  className="pl-10 w-64 glass border-0 focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
+              <SearchAutocomplete 
+                className="w-64 glass border-0 focus:ring-2 focus:ring-primary/20"
+              />
+              <AdvancedSearchModal>
+                <Button variant="outline" size="icon" className="glass-primary hover-glow">
+                  <Search className="w-4 h-4" />
+                </Button>
+              </AdvancedSearchModal>
             </div>
 
             {/* Theme Toggle */}
