@@ -6,59 +6,28 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { LazyImage } from "@/components/ui/LazyImage";
+import { ProductReviews } from "@/components/ProductReviews";
+import { useReviewStats } from "@/hooks/useReviews";
 import heroImage from "@/assets/hero-gulab-jamun.jpg";
 import andhraSweetsCollection from "@/assets/andhra-sweets-collection.jpg";
 
-interface Review {
-  id: number;
-  name: string;
-  rating: number;
-  comment: string;
-  date: string;
-  verified: boolean;
-}
-
-const reviews: Review[] = [
-  {
-    id: 1,
-    name: "Priya Sharma",
-    rating: 5,
-    comment: "Absolutely authentic taste! Reminds me of my grandmother's cooking. The gulab jamuns are perfectly sweet and soft.",
-    date: "2024-01-15",
-    verified: true
-  },
-  {
-    id: 2,
-    name: "Rajesh Kumar",
-    rating: 4,
-    comment: "Great quality and fast delivery. The packaging was excellent and products arrived fresh.",
-    date: "2024-01-10",
-    verified: true
-  },
-  {
-    id: 3,
-    name: "Anitha Reddy",
-    rating: 5,
-    comment: "Best Andhra sweets I've had outside of my hometown. Will definitely order again!",
-    date: "2024-01-08",
-    verified: true
-  }
-];
-
-const ProductDetail = ({ children }: { children?: React.ReactNode }) => {
+const ProductDetail = ({ children, productId = "sample-product-id" }: { children?: React.ReactNode; productId?: string }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState("500g");
   const [isFavorite, setIsFavorite] = useState(false);
 
+  // Get real review stats from database
+  const { data: reviewStats } = useReviewStats(productId);
+
   const product = {
-    id: 1,
+    id: productId,
     name: "Premium Gulab Jamun",
     description: "Soft, spongy and syrupy traditional sweet made with authentic recipe",
     price: 299,
     originalPrice: 349,
-    rating: 4.8,
-    reviews: 124,
+    rating: reviewStats?.averageRating || 4.8,
+    reviews: reviewStats?.totalReviews || 0,
     category: "Traditional Sweets",
     inStock: true,
     images: [heroImage, andhraSweetsCollection],
@@ -281,38 +250,7 @@ const ProductDetail = ({ children }: { children?: React.ReactNode }) => {
           </TabsContent>
           
           <TabsContent value="reviews" className="mt-6">
-            <div className="space-y-6">
-              {reviews.map((review) => (
-                <div key={review.id} className="glass rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-semibold">{review.name}</span>
-                        {review.verified && (
-                          <Badge variant="outline" className="text-xs">Verified Purchase</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex space-x-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star 
-                              key={i} 
-                              className={`w-4 h-4 ${
-                                i < review.rating 
-                                  ? 'text-primary fill-primary' 
-                                  : 'text-muted-foreground'
-                              }`} 
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm text-muted-foreground">{review.date}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground">{review.comment}</p>
-                </div>
-              ))}
-            </div>
+            <ProductReviews productId={product.id} />
           </TabsContent>
         </Tabs>
       </DialogContent>
