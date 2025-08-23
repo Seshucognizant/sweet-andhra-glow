@@ -100,9 +100,15 @@ const ProductGrid = () => {
               {/* Image Container */}
               <div className="relative overflow-hidden">
                 <img 
-                  src={product.image_url || "/placeholder.svg"} 
+                  src={product.image_url || "/images/placeholder.jpg"} 
                   alt={product.name}
                   className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (target.src !== "/images/placeholder.jpg") {
+                      target.src = "/images/placeholder.jpg";
+                    }
+                  }}
                 />
                 
                 {/* Badges */}
