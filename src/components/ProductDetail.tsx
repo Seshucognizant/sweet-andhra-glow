@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { LazyImage } from "@/components/ui/LazyImage";
 import heroImage from "@/assets/hero-gulab-jamun.jpg";
 import andhraSweetsCollection from "@/assets/andhra-sweets-collection.jpg";
 
@@ -86,10 +87,11 @@ const ProductDetail = ({ children }: { children?: React.ReactNode }) => {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative overflow-hidden rounded-2xl glass-primary">
-              <img 
+              <LazyImage 
                 src={product.images[selectedImage]} 
                 alt={product.name}
                 className="w-full h-96 object-cover hover:scale-110 transition-transform duration-500"
+                fallbackSrc="/images/placeholder.jpg"
               />
               <Button
                 size="icon"
@@ -113,7 +115,7 @@ const ProductDetail = ({ children }: { children?: React.ReactNode }) => {
                       : 'border-transparent hover:border-muted-foreground'
                   }`}
                 >
-                  <img src={image} alt="" className="w-full h-full object-cover" />
+                  <LazyImage src={image} alt="" className="w-full h-full object-cover" fallbackSrc="/images/placeholder.jpg" />
                 </button>
               ))}
             </div>

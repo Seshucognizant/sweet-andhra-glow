@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LazyImage } from "@/components/ui/LazyImage";
 import ProductDetail from "@/components/ProductDetail";
 import { useProducts, useCategories, Product as ProductType } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
@@ -99,16 +100,13 @@ const ProductGrid = () => {
             >
               {/* Image Container */}
               <div className="relative overflow-hidden">
-                <img 
+                <LazyImage 
                   src={product.image_url || "/images/placeholder.jpg"} 
                   alt={product.name}
                   className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    if (target.src !== "/images/placeholder.jpg") {
-                      target.src = "/images/placeholder.jpg";
-                    }
-                  }}
+                  fallbackSrc="/images/placeholder.jpg"
+                  threshold={0.1}
+                  rootMargin="100px"
                 />
                 
                 {/* Badges */}

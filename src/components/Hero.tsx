@@ -1,5 +1,6 @@
 import { ArrowRight, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LazyImage } from "@/components/ui/LazyImage";
 import heroImage from "@/assets/hero-gulab-jamun.jpg";
 
 const Hero = () => {
@@ -91,10 +92,12 @@ const Hero = () => {
             <div className="relative">
               {/* Main Product Image */}
               <div className="glass rounded-3xl p-6 hover-lift">
-                <img 
+                <LazyImage 
                   src={heroImage} 
                   alt="Premium Gulab Jamun"
                   className="w-full h-80 lg:h-96 object-cover rounded-2xl"
+                  fallbackSrc="/images/placeholder.jpg"
+                  threshold={0}
                 />
                 <div className="absolute top-8 right-8 glass-secondary rounded-full p-3">
                   <div className="text-center">
