@@ -92,26 +92,43 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
 
     try {
-      // First check if item already exists
-      const { data: existingItem } = await supabase
+      // Normalize weight option handling and merge duplicates if any
+      const baseQuery = supabase
         .from('cart_items')
         .select('*')
         .eq('user_id', user.id)
-        .eq('product_id', productId)
-        .eq('weight_option', weightOption || null)
-        .single();
+        .eq('product_id', productId);
 
-      if (existingItem) {
-        // Update existing item quantity
-        const { error } = await supabase
+      const { data: matches, error: selectError } = weightOption
+        ? await baseQuery.eq('weight_option', weightOption)
+        : await baseQuery.is('weight_option', null);
+
+      if (selectError) throw selectError;
+
+      if (matches && matches.length > 0) {
+        const totalExisting = matches.reduce((sum, row) => sum + (row.quantity || 0), 0);
+        const target = matches[0];
+
+        // Update target with summed quantity + new quantity
+        const { error: updateError } = await supabase
           .from('cart_items')
-          .update({ quantity: existingItem.quantity + quantity })
-          .eq('id', existingItem.id);
+          .update({ quantity: totalExisting + quantity })
+          .eq('id', target.id);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
+
+        // Delete duplicates if any beyond the first
+        if (matches.length > 1) {
+          const duplicates = matches.slice(1).map((r: any) => r.id);
+          const { error: deleteError } = await supabase
+            .from('cart_items')
+            .delete()
+            .in('id', duplicates);
+          if (deleteError) throw deleteError;
+        }
       } else {
         // Insert new item
-        const { error } = await supabase
+        const { error: insertError } = await supabase
           .from('cart_items')
           .insert({
             user_id: user.id,
@@ -120,7 +137,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
             weight_option: weightOption || null,
           });
 
-        if (error) throw error;
+        if (insertError) throw insertError;
       }
       
       await loadCartItems();
