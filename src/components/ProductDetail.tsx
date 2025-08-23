@@ -11,7 +11,7 @@ import { useReviewStats } from "@/hooks/useReviews";
 import heroImage from "@/assets/hero-gulab-jamun.jpg";
 import andhraSweetsCollection from "@/assets/andhra-sweets-collection.jpg";
 
-const ProductDetail = ({ children, productId = "sample-product-id" }: { children?: React.ReactNode; productId?: string }) => {
+const ProductDetail = ({ children, productId }: { children?: React.ReactNode; productId: string }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState("500g");

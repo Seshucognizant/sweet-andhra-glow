@@ -132,7 +132,7 @@ const ProductGrid = () => {
                 {/* Hover Actions */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                   <div className="flex space-x-3">
-                    <ProductDetail>
+                    <ProductDetail productId={product.id}>
                       <Button size="icon" variant="secondary" className="rounded-full glass-primary">
                         <Eye className="w-4 h-4" />
                       </Button>
