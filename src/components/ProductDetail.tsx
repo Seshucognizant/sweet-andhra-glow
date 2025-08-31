@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { ProductReviews } from "@/components/ProductReviews";
 import { useReviewStats } from "@/hooks/useReviews";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthDialog } from "@/components/AuthDialog";
 import heroImage from "@/assets/hero-gulab-jamun.jpg";
 import andhraSweetsCollection from "@/assets/andhra-sweets-collection.jpg";
 
@@ -23,6 +25,7 @@ const ProductDetail = ({ children, productId }: { children?: React.ReactNode; pr
   const { data: reviewStats } = useReviewStats(productId);
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const product = {
     id: productId,
@@ -71,6 +74,9 @@ const ProductDetail = ({ children, productId }: { children?: React.ReactNode; pr
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto glass">
+        <DialogHeader>
+          <DialogTitle className="sr-only">Product Quick View</DialogTitle>
+        </DialogHeader>
         <div className="grid md:grid-cols-2 gap-8 p-6">
           {/* Images Section */}
           <div className="space-y-4">
@@ -197,14 +203,23 @@ const ProductDetail = ({ children, productId }: { children?: React.ReactNode; pr
 
             {/* Add to Cart */}
             <div className="space-y-3">
-              <Button 
-                size="lg" 
-                className="w-full bg-gradient-primary hover-glow text-lg py-6"
-                onClick={handleAddToCart}
-              >
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Add to Cart - ₹{currentPrice * quantity}
-              </Button>
+              {user ? (
+                <Button 
+                  size="lg" 
+                  className="w-full bg-gradient-primary hover-glow text-lg py-6"
+                  onClick={handleAddToCart}
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Add to Cart - ₹{currentPrice * quantity}
+                </Button>
+              ) : (
+                <AuthDialog>
+                  <Button size="lg" className="w-full bg-gradient-primary hover-glow text-lg py-6">
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    Sign in to add to cart
+                  </Button>
+                </AuthDialog>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <Button variant="outline" size="lg" className="glass-primary hover-lift">
                   Buy Now
