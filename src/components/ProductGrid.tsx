@@ -20,11 +20,7 @@ const ProductGrid = () => {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { searchTerm, selectedCategory, setSelectedCategory } = useSearch();
   const { filters } = useFilters();
-  const { data: products, isLoading: productsLoading } = useProducts({
-    categorySlug: selectedCategory,
-    searchTerm,
-    ...filters
-  });
+  const { data: products, isLoading: productsLoading } = useProducts();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   const toggleFavorite = (productId: string) => {

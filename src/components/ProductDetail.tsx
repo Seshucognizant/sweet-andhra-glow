@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { ProductReviews } from "@/components/ProductReviews";
 import { useReviewStats } from "@/hooks/useReviews";
+import { useCart } from "@/contexts/CartContext";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-gulab-jamun.jpg";
 import andhraSweetsCollection from "@/assets/andhra-sweets-collection.jpg";
 
@@ -19,6 +21,8 @@ const ProductDetail = ({ children, productId }: { children?: React.ReactNode; pr
 
   // Get real review stats from database
   const { data: reviewStats } = useReviewStats(productId);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   const product = {
     id: productId,
@@ -39,6 +43,22 @@ const ProductDetail = ({ children, productId }: { children?: React.ReactNode; pr
     setQuantity(prev => 
       type === 'increase' ? prev + 1 : Math.max(1, prev - 1)
     );
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(productId, quantity, selectedWeight);
+      toast({
+        title: "Added to cart",
+        description: `${quantity} x ${product.name} (${selectedWeight}) added to your cart`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const currentPrice = product.prices[selectedWeight as keyof typeof product.prices];
@@ -177,7 +197,11 @@ const ProductDetail = ({ children, productId }: { children?: React.ReactNode; pr
 
             {/* Add to Cart */}
             <div className="space-y-3">
-              <Button size="lg" className="w-full bg-gradient-primary hover-glow text-lg py-6">
+              <Button 
+                size="lg" 
+                className="w-full bg-gradient-primary hover-glow text-lg py-6"
+                onClick={handleAddToCart}
+              >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 Add to Cart - ₹{currentPrice * quantity}
               </Button>

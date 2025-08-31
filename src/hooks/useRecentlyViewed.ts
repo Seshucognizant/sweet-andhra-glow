@@ -32,9 +32,15 @@ export const useRecentlyViewed = () => {
         return [];
       }
 
-      // Maintain the order based on recentlyViewedIds
+      // Transform and maintain the order based on recentlyViewedIds
+      const transformedData = data?.map(item => ({
+        ...item,
+        review_count: item.review_count || 0,
+        total_reviews: item.review_count || 0,
+      })) as Product[];
+
       const orderedProducts = recentlyViewedIds.map(id => 
-        data?.find(product => product.id === id)
+        transformedData?.find(product => product.id === id)
       ).filter(Boolean) as Product[];
 
       return orderedProducts;

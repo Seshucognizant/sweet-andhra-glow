@@ -49,12 +49,12 @@ export const useRecommendations = (productId?: string, limit: number = 8) => {
               .order('review_count', { ascending: false })
               .limit(limit);
 
-            recommendedProducts = (similarProducts || []).map(p => ({
-              ...p,
-              weight_options: Array.isArray(p.weight_options) 
-                ? p.weight_options.map(String) 
-                : []
-            })) as Product[];
+            recommendedProducts = similarProducts?.map(item => ({
+              ...item,
+              weight_options: Array.isArray(item.weight_options) ? item.weight_options : [],
+              review_count: item.review_count || 0,
+              total_reviews: item.review_count || 0,
+            })) as Product[] || [];
           }
         } else {
           // General recommendations based on user behavior
@@ -72,7 +72,7 @@ export const useRecommendations = (productId?: string, limit: number = 8) => {
           }
 
           // Get highly rated bestsellers
-          const { data: products } = await query
+          const { data: productsData } = await query
             .gte('rating', 4.0)
             .gte('review_count', 5)
             .or('is_bestseller.eq.true,is_new.eq.true')
@@ -80,17 +80,17 @@ export const useRecommendations = (productId?: string, limit: number = 8) => {
             .order('review_count', { ascending: false })
             .limit(limit);
 
-          recommendedProducts = (products || []).map(p => ({
-            ...p,
-            weight_options: Array.isArray(p.weight_options) 
-              ? p.weight_options.map(String) 
-              : []
-          })) as Product[];
+          recommendedProducts = productsData?.map(item => ({
+            ...item,
+            weight_options: Array.isArray(item.weight_options) ? item.weight_options : [],
+            review_count: item.review_count || 0,
+            total_reviews: item.review_count || 0,
+          })) as Product[] || [];
         }
 
         // If we don't have enough recommendations, fill with top-rated products
         if (recommendedProducts.length < limit) {
-          const { data: topRated } = await supabase
+          const { data: topRatedData } = await supabase
             .from('products')
             .select(`
               *,
@@ -103,12 +103,14 @@ export const useRecommendations = (productId?: string, limit: number = 8) => {
             .order('review_count', { ascending: false })
             .limit(limit - recommendedProducts.length);
 
-          recommendedProducts = [...recommendedProducts, ...(topRated || []).map(p => ({
-            ...p,
-            weight_options: Array.isArray(p.weight_options) 
-              ? p.weight_options.map(String) 
-              : []
-          }))];
+          const topRated = topRatedData?.map(item => ({
+            ...item,
+            weight_options: Array.isArray(item.weight_options) ? item.weight_options : [],
+            review_count: item.review_count || 0,
+            total_reviews: item.review_count || 0,
+          })) as Product[] || [];
+
+          recommendedProducts = [...recommendedProducts, ...topRated];
         }
 
         return recommendedProducts as Product[];
@@ -149,12 +151,14 @@ export const useCategoryRecommendations = (categoryId: string, excludeProductId?
         return [];
       }
 
-      return data.map(p => ({
-        ...p,
-        weight_options: Array.isArray(p.weight_options) 
-          ? p.weight_options.map(String) 
-          : []
-      })) as Product[];
+      const categoryProducts = data?.map(item => ({
+        ...item,
+        weight_options: Array.isArray(item.weight_options) ? item.weight_options : [],
+        review_count: item.review_count || 0,
+        total_reviews: item.review_count || 0,
+      })) as Product[] || [];
+
+      return categoryProducts;
     },
     enabled: !!categoryId,
   });
@@ -184,12 +188,14 @@ export const useTrendingProducts = (limit: number = 8) => {
         return [];
       }
 
-      return data.map(p => ({
-        ...p,
-        weight_options: Array.isArray(p.weight_options) 
-          ? p.weight_options.map(String) 
-          : []
-      })) as Product[];
+      const trendingProducts = data?.map(item => ({
+        ...item,
+        weight_options: Array.isArray(item.weight_options) ? item.weight_options : [],
+        review_count: item.review_count || 0,
+        total_reviews: item.review_count || 0,
+      })) as Product[] || [];
+
+      return trendingProducts;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });

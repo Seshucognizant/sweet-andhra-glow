@@ -26,8 +26,8 @@ export const useProducts = () => {
         const transformedData = data?.map(item => ({
           ...item,
           weight_options: Array.isArray(item.weight_options) ? item.weight_options : [],
-          review_count: item.total_reviews || 0,
-          total_reviews: item.total_reviews || 0,
+          review_count: item.review_count || 0,
+          total_reviews: item.review_count || 0,
         })) as Product[] || [];
 
         setProducts(transformedData);

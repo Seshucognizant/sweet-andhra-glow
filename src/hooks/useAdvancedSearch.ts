@@ -99,10 +99,14 @@ export const useAdvancedSearch = () => {
         throw error;
       }
 
-      return data?.map(item => ({
+      const transformedData = data?.map(item => ({
         ...item,
-        weight_options: item.weight_options || []
+        weight_options: Array.isArray(item.weight_options) ? item.weight_options : [],
+        review_count: item.review_count || 0,
+        total_reviews: item.review_count || 0,
       })) as Product[] || [];
+
+      return transformedData;
     },
     enabled: criteria.query.trim().length > 0,
   });
