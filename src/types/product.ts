@@ -3,6 +3,7 @@ export interface Product {
   name: string;
   description?: string | null;
   price: number;
+  original_price?: number;
   image_url?: string | null;
   category_id?: string | null;
   weight_options: string[] | any;
@@ -10,18 +11,16 @@ export interface Product {
   stock_quantity: number;
   is_bestseller: boolean | null;
   is_new: boolean | null;
+  is_active?: boolean;
   rating: number;
-  total_reviews: number;
+  review_count?: number;
+  total_reviews?: number;
   created_at: string;
   updated_at: string;
   category?: {
     name: string;
     slug: string;
   } | null;
-  
-  // Legacy compatibility fields
-  review_count?: number;
-  original_price?: number;
 }
 
 export interface Category {

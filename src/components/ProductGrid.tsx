@@ -206,9 +206,9 @@ const ProductGrid = () => {
                       />
                     ))}
                   </div>
-                  <span className="text-sm text-muted-foreground">
-                    {product.rating} ({product.review_count} reviews)
-                  </span>
+                   <span className="text-sm text-muted-foreground">
+                     {product.rating} ({product.review_count || product.total_reviews || 0} reviews)
+                   </span>
                 </div>
 
                 {/* Price and Add to Cart */}
