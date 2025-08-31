@@ -1,137 +1,91 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Product, Category } from '@/types/product';
 
-export interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  original_price?: number;
-  image_url?: string;
-  rating: number;
-  review_count: number;
-  category_id?: string;
-  stock_quantity: number;
-  is_active: boolean;
-  is_new: boolean;
-  is_bestseller: boolean;
-  weight_options: string[];
-  created_at: string;
-  updated_at: string;
-  category?: {
-    name: string;
-    slug: string;
-  };
-}
+export type { Product, Category } from '@/types/product';
 
-interface ProductFilters {
-  categorySlug?: string;
-  searchTerm?: string;
-  priceRange?: [number, number];
-  minRating?: number;
-  availability?: 'all' | 'in-stock' | 'out-of-stock';
-  sortBy?: 'name' | 'price-low' | 'price-high' | 'rating' | 'newest' | 'popular';
-}
+export const useProducts = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export const useProducts = (filters: ProductFilters = {}) => {
-  const {
-    categorySlug,
-    searchTerm,
-    priceRange,
-    minRating,
-    availability,
-    sortBy = 'newest'
-  } = filters;
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            *,
+            category:categories(name, slug)
+          `)
+          .order('created_at', { ascending: false });
 
-  return useQuery({
-    queryKey: ['products', categorySlug, searchTerm, priceRange, minRating, availability, sortBy],
-    queryFn: async () => {
-      let query = supabase
-        .from('products')
-        .select(`
-          *,
-          category:categories(name, slug)
-        `)
-        .eq('is_active', true);
+        if (error) throw error;
 
-      // Category filter
-      if (categorySlug && categorySlug !== 'all') {
-        query = query.eq('categories.slug', categorySlug);
-      }
+        const transformedData = data?.map(item => ({
+          ...item,
+          weight_options: Array.isArray(item.weight_options) ? item.weight_options : [],
+          review_count: item.total_reviews || 0,
+          total_reviews: item.total_reviews || 0,
+        })) as Product[] || [];
 
-      // Search filter
-      if (searchTerm && searchTerm.trim()) {
-        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-      }
-
-      // Price range filter
-      if (priceRange && (priceRange[0] > 0 || priceRange[1] < 5000)) {
-        query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
-      }
-
-      // Minimum rating filter
-      if (minRating && minRating > 0) {
-        query = query.gte('rating', minRating);
-      }
-
-      // Availability filter
-      if (availability === 'in-stock') {
-        query = query.gt('stock_quantity', 0);
-      } else if (availability === 'out-of-stock') {
-        query = query.eq('stock_quantity', 0);
-      }
-
-      // Sorting
-      switch (sortBy) {
-        case 'name':
-          query = query.order('name', { ascending: true });
-          break;
-        case 'price-low':
-          query = query.order('price', { ascending: true });
-          break;
-        case 'price-high':
-          query = query.order('price', { ascending: false });
-          break;
-        case 'rating':
-          query = query.order('rating', { ascending: false });
-          break;
-        case 'popular':
-          query = query.order('review_count', { ascending: false });
-          break;
-        case 'newest':
-        default:
-          query = query.order('created_at', { ascending: false });
-          break;
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
+        setProducts(transformedData);
+      } catch (error: any) {
         console.error('Error fetching products:', error);
-        throw error;
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      return data as Product[];
-    },
-  });
+    fetchProducts();
+  }, []);
+
+  return { 
+    products, 
+    loading, 
+    error,
+    // Legacy compatibility
+    data: products,
+    isLoading: loading 
+  };
 };
 
 export const useCategories = () => {
-  return useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-      if (error) {
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+
+        if (error) throw error;
+
+        setCategories(data || []);
+      } catch (error: any) {
         console.error('Error fetching categories:', error);
-        throw error;
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      return data;
-    },
-  });
+    fetchCategories();
+  }, []);
+
+  return { 
+    categories, 
+    loading, 
+    error,
+    // Legacy compatibility
+    data: categories,
+    isLoading: loading 
+  };
 };

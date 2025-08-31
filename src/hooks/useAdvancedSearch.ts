@@ -99,7 +99,10 @@ export const useAdvancedSearch = () => {
         throw error;
       }
 
-      return data as Product[];
+      return data?.map(item => ({
+        ...item,
+        weight_options: item.weight_options || []
+      })) as Product[] || [];
     },
     enabled: criteria.query.trim().length > 0,
   });
