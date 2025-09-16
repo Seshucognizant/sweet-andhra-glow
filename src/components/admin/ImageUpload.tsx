@@ -70,9 +70,13 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
       });
     } catch (error: any) {
       console.error('Upload error:', error);
+      const status = (error && (error.status || error.statusCode)) as number | undefined;
+      const friendly = status === 401 || status === 403
+        ? 'You do not have permission to upload images. Please sign in as an admin.'
+        : (error?.message || 'Failed to upload image');
       toast({
         title: 'Upload failed',
-        description: error.message || 'Failed to upload image',
+        description: friendly,
         variant: 'destructive',
       });
     } finally {
@@ -87,10 +91,23 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
   const handleRemove = async () => {
     if (value && onRemove) {
       try {
-        // Extract file path from URL
-        const url = new URL(value);
-        const pathParts = url.pathname.split('/');
-        const filePath = pathParts.slice(-2).join('/'); // Get "products/filename"
+        // Extract file path from public URL safely
+        let filePath = '';
+        try {
+          const url = new URL(value);
+          const marker = '/storage/v1/object/public/product-images/';
+          const idx = url.pathname.indexOf(marker);
+          if (idx !== -1) {
+            filePath = decodeURIComponent(url.pathname.substring(idx + marker.length));
+          } else {
+            // Fallback to last 2 segments (e.g., products/filename)
+            const parts = url.pathname.split('/');
+            filePath = parts.slice(-2).join('/');
+          }
+        } catch {}
+        if (!filePath) {
+          throw new Error('Could not resolve image path for deletion.');
+        }
 
         // Delete from storage
         await supabase.storage
@@ -105,9 +122,13 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
         });
       } catch (error: any) {
         console.error('Remove error:', error);
+        const status = (error && (error.status || error.statusCode)) as number | undefined;
+        const friendly = status === 401 || status === 403
+          ? 'You do not have permission to remove images. Please sign in as an admin.'
+          : (error?.message || 'Failed to remove image');
         toast({
           title: 'Remove failed',
-          description: 'Failed to remove image',
+          description: friendly,
           variant: 'destructive',
         });
       }
