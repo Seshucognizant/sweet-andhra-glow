@@ -15,13 +15,13 @@ interface ImageUploadProps {
 
 export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [isUrlUploading, setIsUrlUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
@@ -88,6 +88,12 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
     }
   };
 
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
   const handleRemove = async () => {
     if (value && onRemove) {
       try {
@@ -135,13 +141,77 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
     }
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) await processFile(file);
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) {
+          await processFile(file);
+          break;
+        }
+      }
+    }
+  };
+
+  const handleUrlUpload = async () => {
+    if (!imageUrl) {
+      toast({
+        title: 'No URL',
+        description: 'Please paste an image URL',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsUrlUploading(true);
+    try {
+      const res = await fetch(imageUrl, { mode: 'cors' });
+      if (!res.ok) throw new Error('Could not fetch image from URL');
+      const blob = await res.blob();
+      const ext = blob.type.split('/')[1] || 'jpg';
+      const file = new File([blob], `url-image.${ext}`, { type: blob.type });
+      await processFile(file);
+      setImageUrl('');
+    } catch (error: any) {
+      console.error('URL upload error:', error);
+      toast({
+        title: 'Upload failed',
+        description: error?.message || 'Could not upload from URL (may be blocked by CORS)',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUrlUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Label htmlFor="image-upload">Product Image</Label>
       
       {value ? (
-        <div className="relative">
-          <div className="relative w-full h-48 border-2 border-dashed border-border rounded-lg overflow-hidden">
+        <div className="space-y-3">
+          <div
+            className="relative w-full h-48 border-2 border-dashed border-border rounded-lg overflow-hidden"
+            onPaste={handlePaste}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <img
               src={value}
               alt="Product"
@@ -170,11 +240,56 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
               </Button>
             </div>
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            Tip: Drag & drop or paste an image here to replace.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1 flex gap-2">
+              <Input
+                placeholder="https://example.com/image.jpg"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                aria-label="Image URL"
+              />
+              <Button
+                type="button"
+                onClick={handleUrlUpload}
+                disabled={disabled || isUploading || isUrlUploading}
+              >
+                {isUrlUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Upload from URL
+              </Button>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (fileInputRef.current) {
+                  fileInputRef.current.setAttribute('capture', 'environment');
+                  fileInputRef.current.click();
+                }
+              }}
+              disabled={disabled || isUploading}
+            >
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Use Camera
+            </Button>
+          </div>
         </div>
       ) : (
-        <div
-          className="relative w-full h-48 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors"
+        <div className="space-y-3">
+          <div
+            className={`relative w-full h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-primary bg-primary/5' : 'border-border'}`,
           onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onPaste={handlePaste}
+          tabIndex={0}
+          role="button"
+          aria-label="Upload image"
         >
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
@@ -184,10 +299,43 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
           ) : (
             <div className="flex flex-col items-center gap-2">
               <ImageIcon className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Click to upload image</p>
+              <p className="text-sm text-muted-foreground">Click, drag & drop, or paste image</p>
               <p className="text-xs text-muted-foreground">PNG, JPG, WEBP up to 5MB</p>
             </div>
           )}
+        </div>
+
+        <div className="mt-3 flex flex-col sm:flex-row gap-2">
+          <div className="flex-1 flex gap-2">
+            <Input
+              placeholder="https://example.com/image.jpg"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              aria-label="Image URL"
+            />
+            <Button
+              type="button"
+              onClick={handleUrlUpload}
+              disabled={disabled || isUploading || isUrlUploading}
+            >
+              {isUrlUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Upload from URL
+            </Button>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              if (fileInputRef.current) {
+                fileInputRef.current.setAttribute('capture', 'environment');
+                fileInputRef.current.click();
+              }
+            }}
+            disabled={disabled || isUploading}
+          >
+            <ImageIcon className="h-4 w-4 mr-2" />
+            Use Camera
+          </Button>
         </div>
       )}
 
@@ -196,6 +344,7 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
         id="image-upload"
         type="file"
         accept="image/*"
+        capture="environment"
         onChange={handleFileSelect}
         disabled={disabled || isUploading}
         className="hidden"
