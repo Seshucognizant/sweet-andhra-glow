@@ -281,16 +281,16 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
       ) : (
         <div className="space-y-3">
           <div
-            className={`relative w-full h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-primary bg-primary/5' : 'border-border'}`,
-          onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onPaste={handlePaste}
-          tabIndex={0}
-          role="button"
-          aria-label="Upload image"
-        >
+            className={`relative w-full h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-primary bg-primary/5' : 'border-border'}`}
+            onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onPaste={handlePaste}
+            tabIndex={0}
+            role="button"
+            aria-label="Upload image"
+          >
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -336,6 +336,7 @@ export const ImageUpload = ({ value, onChange, onRemove, disabled }: ImageUpload
             <ImageIcon className="h-4 w-4 mr-2" />
             Use Camera
           </Button>
+        </div>
         </div>
       )}
 
