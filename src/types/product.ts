@@ -6,6 +6,7 @@ export interface Product {
   original_price?: number;
   image_url?: string | null;
   category_id?: string | null;
+  vendor_id?: string | null;
   weight_options: string[] | any;
   ingredients?: string | null;
   stock_quantity: number;
@@ -20,6 +21,10 @@ export interface Product {
   category?: {
     name: string;
     slug: string;
+  } | null;
+  vendor?: {
+    name: string;
+    status: string;
   } | null;
 }
 

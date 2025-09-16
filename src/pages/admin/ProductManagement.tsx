@@ -9,9 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Search, Edit, Trash2, Package, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/types/product';
+import { ProductForm } from '@/components/admin/ProductForm';
 
 export const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -77,6 +80,21 @@ export const ProductManagement = () => {
     return { label: 'In Stock', color: 'bg-green-100 text-green-800' };
   };
 
+  const handleAddProduct = () => {
+    setSelectedProduct(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setSelectedProduct(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -87,10 +105,25 @@ export const ProductManagement = () => {
           </p>
         </div>
         
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Product
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2" onClick={handleAddProduct}>
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedProduct ? 'Edit Product' : 'Add New Product'}
+              </DialogTitle>
+            </DialogHeader>
+            <ProductForm
+              product={selectedProduct}
+              onSuccess={handleDialogClose}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search and Filters */}
@@ -130,7 +163,7 @@ export const ProductManagement = () => {
               <Card key={product.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="text-lg">{product.name}</CardTitle>
                       <p className="text-sm text-muted-foreground">
                         {product.category?.name || 'No category'}
@@ -140,6 +173,15 @@ export const ProductManagement = () => {
                       {stockStatus.label}
                     </Badge>
                   </div>
+                  {product.image_url && (
+                    <div className="mt-2">
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-32 object-cover rounded-md"
+                      />
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -176,7 +218,11 @@ export const ProductManagement = () => {
                       <span>{product.rating}/5.0</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditProduct(product)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
