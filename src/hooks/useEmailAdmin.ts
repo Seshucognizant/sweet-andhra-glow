@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Define admin emails here
 const ADMIN_EMAILS = [
+  'lovelyseshu@gmail.com',
   'admin@andrhasweets.com',
   'owner@andrhasweets.com',
   // Add more admin emails as needed
