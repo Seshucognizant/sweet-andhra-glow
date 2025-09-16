@@ -11,14 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsAdmin } from '@/hooks/useUserRole';
+import { useEmailAdmin } from '@/hooks/useEmailAdmin';
 import { User, LogOut, ShoppingBag, Heart, Settings, Zap } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
-  const { isAdmin } = useIsAdmin();
+  const { isAdmin } = useEmailAdmin();
   const [loading, setLoading] = useState(false);
 
   // Keyboard shortcut for admin panel

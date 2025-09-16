@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsAdmin } from '@/hooks/useUserRole';
+import { useEmailAdmin } from '@/hooks/useEmailAdmin';
 import { Loader2 } from 'lucide-react';
 
 interface AdminRouteProps {
@@ -9,7 +9,7 @@ interface AdminRouteProps {
 
 export const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isLoading: authLoading } = useAuth();
-  const { isAdmin, isLoading: roleLoading } = useIsAdmin();
+  const { isAdmin, isLoading: roleLoading } = useEmailAdmin();
 
   if (authLoading || roleLoading) {
     return (
