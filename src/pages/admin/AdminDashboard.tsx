@@ -1,151 +1,150 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Truck, ShoppingCart, Users, TrendingUp, AlertTriangle } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AdminDashboardWidgets } from '@/components/admin/AdminDashboardWidgets';
+import { AdminCharts } from '@/components/admin/AdminCharts';
+import { 
+  BarChart3, 
+  Users, 
+  Package, 
+  ShoppingCart, 
+  TrendingUp,
+  Bell,
+  Zap,
+  Settings,
+  Eye
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
+
+// Welcome notification
+const showWelcomeNotification = () => {
+  toast({
+    title: "Welcome to Admin Dashboard! 🎉",
+    description: "Use Ctrl+Shift+A for quick access anytime.",
+  });
+};
 
 export const AdminDashboard = () => {
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['adminStats'],
-    queryFn: async () => {
-      const [products, vendors, orders, customers] = await Promise.all([
-        supabase.from('products').select('id', { count: 'exact' }),
-        supabase.from('vendors').select('id', { count: 'exact' }),
-        supabase.from('orders').select('id', { count: 'exact' }),
-        supabase.from('profiles').select('id', { count: 'exact' }),
-      ]);
+  const [activeTab, setActiveTab] = useState('overview');
 
-      const lowStockProducts = await supabase
-        .from('products')
-        .select('id')
-        .lt('stock_quantity', 10)
-        .eq('is_active', true);
-
-      return {
-        totalProducts: products.count || 0,
-        totalVendors: vendors.count || 0,
-        totalOrders: orders.count || 0,
-        totalCustomers: customers.count || 0,
-        lowStockCount: lowStockProducts.data?.length || 0,
-      };
-    },
-  });
-
-  const dashboardCards = [
-    {
-      title: 'Total Products',
-      value: stats?.totalProducts || 0,
-      icon: Package,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-    },
-    {
-      title: 'Vendors',
-      value: stats?.totalVendors || 0,
-      icon: Truck,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-    },
-    {
-      title: 'Orders',
-      value: stats?.totalOrders || 0,
-      icon: ShoppingCart,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-    },
-    {
-      title: 'Customers',
-      value: stats?.totalCustomers || 0,
-      icon: Users,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-    },
-  ];
+  // Show welcome notification on mount
+  useEffect(() => {
+    const timer = setTimeout(showWelcomeNotification, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to your admin dashboard. Here's an overview of your business.
-        </p>
+    <div className="space-y-6 animate-slide-up">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold font-display bg-gradient-hero bg-clip-text text-transparent">
+            Admin Dashboard
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Welcome back! Here's your business overview at a glance.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-gradient-primary">
+            <Zap className="mr-1 h-3 w-3" />
+            Live Updates
+          </Badge>
+          <Button variant="outline" size="sm" className="glass-primary hover-glow">
+            <Bell className="mr-2 h-4 w-4" />
+            Notifications
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {dashboardCards.map((card) => (
-          <Card key={card.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {card.title}
-              </CardTitle>
-              <div className={`${card.bgColor} p-2 rounded-md`}>
-                <card.icon className={`h-4 w-4 ${card.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {isLoading ? <Skeleton className="h-8 w-16" /> : card.value}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="glass-primary border-0">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="management" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Management
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Alerts and Quick Actions */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Alerts */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
-              Alerts & Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {isLoading ? (
-                <Skeleton className="h-4 w-full" />
-              ) : stats?.lowStockCount ? (
-                <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm">
-                    {stats.lowStockCount} products are running low on stock
-                  </span>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No alerts at this time</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="overview" className="space-y-6">
+          <AdminDashboardWidgets />
+        </TabsContent>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <button className="w-full text-left p-2 rounded-md hover:bg-accent text-sm">
-                Add New Product
-              </button>
-              <button className="w-full text-left p-2 rounded-md hover:bg-accent text-sm">
-                Create Purchase Order
-              </button>
-              <button className="w-full text-left p-2 rounded-md hover:bg-accent text-sm">
-                Add New Vendor
-              </button>
-              <button className="w-full text-left p-2 rounded-md hover:bg-accent text-sm">
-                View Recent Orders
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="analytics" className="space-y-6">
+          <AdminCharts />
+        </TabsContent>
+
+        <TabsContent value="management" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Link to="/admin/products">
+              <Card className="glass hover-lift cursor-pointer animate-scale-in">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-primary" />
+                    Product Management
+                  </CardTitle>
+                  <CardDescription>
+                    Manage your product catalog, inventory, and pricing
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" className="w-full glass-primary">
+                    <Eye className="mr-2 h-4 w-4" />
+                    Manage Products
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link to="/admin/vendors">
+              <Card className="glass hover-lift cursor-pointer animate-scale-in">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-accent" />
+                    Vendor Management
+                  </CardTitle>
+                  <CardDescription>
+                    Manage vendor relationships and partnerships
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" className="w-full glass-secondary">
+                    <Eye className="mr-2 h-4 w-4" />
+                    Manage Vendors
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Card className="glass hover-lift cursor-pointer animate-scale-in">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-tertiary" />
+                  Order Management
+                </CardTitle>
+                <CardDescription>
+                  Track and manage customer orders and fulfillment
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full" disabled>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Coming Soon
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
